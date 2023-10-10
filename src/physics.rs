@@ -1,7 +1,6 @@
 use nalgebra::{vector, Vector3, UnitQuaternion};
 
 #[derive(Clone, Copy)]
-
 pub struct PhysBody {
     //dimensions of body (m)
     pub length: f64,
@@ -71,14 +70,13 @@ impl PhysBody {
         if self.grav {
             self.fsum += self.att.inverse_transform_vector(&(vector![0.0, 0.0, -9.81] * self.mass));
         }
-        
+
         //force to linear acceleration in absolute coordinate system
         let mut lacc = self.fsum / self.mass;
         lacc = self.att.transform_vector(&lacc);
         
-        //moment to angular acceleration in absolute coordinate system
-        let mut aacc = self.msum.component_div(&Vector3::new(self.moi, self.moj, self.mok));
-        aacc = self.att.transform_vector(&aacc);
+        //moment to angular acceleration
+        let aacc = self.msum.component_div(&Vector3::new(self.moi, self.moj, self.mok));
 
         //Euler integration of linear motion
         self.vel += lacc * dt;
@@ -91,5 +89,35 @@ impl PhysBody {
         //reset force and vector sums
         self.fsum = vector![0.0, 0.0, 0.0];
         self.msum = vector![0.0, 0.0, 0.0];
+    }
+}
+
+#[cfg(test)]    
+mod tests {
+    use super::*;
+    #[test]
+    fn test_new() {
+        let test_body = PhysBody::new(
+            1.0,
+            0.5,
+            1.0,
+            vector![0.0, 0.0, 0.0],
+            vector![0.0, 0.0, 0.0],
+            UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+            vector![0.0, 0.0, 0.0],
+            false,
+        );
+        assert_eq!(test_body.length, 1.0);
+        assert_eq!(test_body.radius, 0.5);
+        assert_eq!(test_body.mass, 1.0);
+        assert_eq!(test_body.pos, vector![0.0, 0.0, 0.0]);
+        assert_eq!(test_body.vel, vector![0.0, 0.0, 0.0]);
+        assert_eq!(test_body.att, UnitQuaternion::identity());
+        assert_eq!(test_body.rat, vector![0.0, 0.0, 0.0]);
+        assert_eq!(test_body.grav, false);
+
+        assert_eq!(test_body.moi, 0.125);
+        assert_eq!(test_body.moj, 0.145833);
+        assert_eq!(test_body.mok, 0.145833);
     }
 }
