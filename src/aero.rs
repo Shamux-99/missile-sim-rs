@@ -1,4 +1,4 @@
-use nalgebra::{vector, Vector3};
+use nalgebra::{vector, Vector2, Vector3, Rotation2, Rotation3};
 
 use crate::physics::PhysBody;
 
@@ -87,6 +87,48 @@ impl AeroBody {
         } else {
             self.phys.fsum += lfs;
             self.phys.msum += vector![0.0, lfs[02] * self.l_f, lfs[01] * -self.l_f] - dmp;
+        }
+    }
+
+    pub fn csurf(
+        &mut self,
+        pitch: f64,
+        yaw: f64,
+    ) {
+        //unit velocity vector in missile coordinate system
+        let relvel = self.phys.att.inverse_transform_vector(&self.phys.vel).normalize();
+
+        //unit velocity vector in pitch control surface coordinate system
+        let rvp = Rotation3::new(vector![0.0, -pitch, 0.0]).transform_vector(&relvel);
+        //println!("{}", rvp);
+
+        //unit velocity vector in yaw control surface coordinate system
+        let rvy = Rotation3::new(vector![0.0, 0.0, yaw]).transform_vector(&relvel);
+        println!("{}", rvy);
+
+        //drag on pitch control surface in missile coordinate system
+        let pd: Vector2<f64> = Rotation2::new(pitch).inverse_transform_vector(&vector![
+            self.dbs * self.csa * 2.0 * 0.1 * rvp.x,
+            self.dbs * self.csa * 2.0 * 1.3 * rvp.y,
+        ]);
+        //println!("{}", pd);
+
+        //drag on yaw control surface in missile coordinate system
+        let yd: Vector2<f64> = Rotation2::new(-yaw).inverse_transform_vector(&vector![
+            self.dbs * self.csa * 2.0 * 0.1 * rvy.x,
+            self.dbs * self.csa * 2.0 * 1.3 * rvy.y,
+        ]);
+        //println!("{}", yd);
+
+        let lfs = vector![-(pd.x + yd.x), yd.y, pd.y];
+        //println!("{}", lfs);
+
+        if f64::is_nan(lfs[00]) {
+            self.phys.fsum += vector![0.0, 0.0, 0.0];
+            self.phys.msum += vector![0.0, 0.0, 0.0];
+        } else {
+            self.phys.fsum += lfs;
+            //self.phys.msum += vector![0.0, lfs[02] * self.csd, lfs[01] * self.csd];
         }
     }
 }

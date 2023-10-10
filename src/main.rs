@@ -9,7 +9,7 @@ use aero::AeroBody;
 use physics::PhysBody;
 use output::write;
 
-const DT: f64 = 0.01;
+const DT: f64 = 0.05;
 fn main() {
     fs::remove_file("state.csv").expect("could not remove file");
     let file = OpenOptions::new()
@@ -28,11 +28,11 @@ fn main() {
         5.18,
         0.36,
         581.0,
-        vector![0.0, 0.0, 4000.0],
-        vector![0.0, 0.0, 0.0],
+        vector![0.0, 0.0, 2000.0],
+        vector![100.0, 0.0, 0.0],
         UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
         vector![0.0, 0.0, 0.0],
-        true,
+        false,
     ),
     1.17,
     0.2,
@@ -44,7 +44,7 @@ fn main() {
     );
 
     //program main loop
-    for t in 0..((40.0 / DT) + 1.0) as i32 {
+    for t in 0..((20.0 / DT) + 1.0) as i32 {
         println!("t = {}", t);
         //println!("{}", missile.att.transform_vector(&Vector3::x_axis()));
         //println!("{}", missile.phys.pos);
@@ -58,7 +58,7 @@ fn main() {
         //missile physics calculations
         missile.aerostate();
         missile.bodydrag();
-        missile.phys.msum += vector![0.0, 0.0, 0.0];
+        //missile.csurf(0.0, 0.0);
         missile.phys.step(DT);
     }
     Command::new("/home/jkurn/plot/.venv/bin/python")
