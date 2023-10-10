@@ -19,7 +19,7 @@ pub struct PhysBody {
     pub pos: Vector3<f64>,
     pub vel: Vector3<f64>,
 
-    //attitude of object (transformation from inertial to missile coordinate system)
+    //attitude of object (transformation from missile to inertial coordinate system)
     pub att: UnitQuaternion<f64>,
     pub rat: Vector3<f64>,
 
@@ -67,6 +67,11 @@ impl PhysBody {
         &mut self,
         dt: f64,
     ) {
+        //adds force of gravity if needed
+        if self.grav {
+            self.fsum += self.att.inverse_transform_vector(&(vector![0.0, 0.0, -9.81] * self.mass));
+        }
+        
         //force to linear acceleration in absolute coordinate system
         let mut lacc = self.fsum / self.mass;
         lacc = self.att.transform_vector(&lacc);

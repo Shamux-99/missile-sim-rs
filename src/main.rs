@@ -11,7 +11,7 @@ fn main() {
         5.18,
         0.36,
         581.0,
-        vector![0.0, 0.0, 0.0],
+        vector![0.0, 0.0, 10.0],
         vector![0.0, 0.0, 0.0],
         UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
         vector![0.0, 0.0, 0.0],
@@ -20,8 +20,8 @@ fn main() {
 
     for t in 0..((1.0 / DT) + 1.0) as i32 {
         println!("t = {}", t);
-        println!("{}", missile.att.transform_vector(&Vector3::x_axis()));
-        //println!("{}", missile.pos);
+        //println!("{}", missile.att.transform_vector(&Vector3::x_axis()));
+        println!("{}", missile.pos);
         missile.msum += vector![0.0, 0.0, 0.0];
         missile.step(DT);
     }
