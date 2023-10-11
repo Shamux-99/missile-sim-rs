@@ -1,4 +1,4 @@
-use nalgebra::{vector, Vector2, Vector3, Rotation2, Rotation3};
+use nalgebra::{vector, Vector3, Rotation3};
 
 use crate::physics::PhysBody;
 
@@ -73,7 +73,7 @@ impl AeroBody {
             ycomp * self.dbs * self.pfa * self.k_n,
             zcomp * self.dbs * self.pfa * self.k_n,
         );
-        println!("{}", lfs);
+        //println!("{}", lfs);
 
         let dmp = Vector3::new(
             0.0,
@@ -89,7 +89,6 @@ impl AeroBody {
             self.phys.msum += vector![0.0, lfs[02] * self.l_f, lfs[01] * -self.l_f] - dmp;
         }
     }
-
     pub fn csurf(
         &mut self,
         pitch: f64,
@@ -98,37 +97,30 @@ impl AeroBody {
         //unit velocity vector in missile coordinate system
         let relvel = self.phys.att.inverse_transform_vector(&self.phys.vel).normalize();
 
-        //unit velocity vector in pitch control surface coordinate system
         let rvp = Rotation3::new(vector![0.0, -pitch, 0.0]).transform_vector(&relvel);
-        //println!("{}", rvp);
+        let rvy = Rotation3::new(vector![0.0, 0.0, -yaw]).transform_vector(&relvel);
 
-        //unit velocity vector in yaw control surface coordinate system
-        let rvy = Rotation3::new(vector![0.0, 0.0, yaw]).transform_vector(&relvel);
-        println!("{}", rvy);
 
-        //drag on pitch control surface in missile coordinate system
-        let pd: Vector2<f64> = Rotation2::new(pitch).inverse_transform_vector(&vector![
-            self.dbs * self.csa * 2.0 * 0.1 * rvp.x,
-            self.dbs * self.csa * 2.0 * 1.3 * rvp.y,
-        ]);
-        //println!("{}", pd);
+        let xpcomp = -rvp.dot(&Vector3::x_axis());
+        let xycomp = -rvy.dot(&Vector3::x_axis());
+        let ycomp = -rvy.dot(&Vector3::y_axis());
+        let zcomp = -rvp.dot(&Vector3::z_axis());
 
-        //drag on yaw control surface in missile coordinate system
-        let yd: Vector2<f64> = Rotation2::new(-yaw).inverse_transform_vector(&vector![
-            self.dbs * self.csa * 2.0 * 0.1 * rvy.x,
-            self.dbs * self.csa * 2.0 * 1.3 * rvy.y,
-        ]);
-        //println!("{}", yd);
-
-        let lfs = vector![-(pd.x + yd.x), yd.y, pd.y];
+        //local force summation of linear drag forces acting on missile
+        let mut lfs = Vector3::new(
+            xpcomp * xycomp * self.dbs * self.csa * 4.0 * 0.1,
+            ycomp * self.dbs * self.csa * 2.0 * 1.2,
+            zcomp * self.dbs * self.csa * 2.0 * 1.2,
+        );
         //println!("{}", lfs);
+        lfs = Rotation3::new(vector![0.0, -pitch, -yaw]).inverse_transform_vector(&lfs);
 
         if f64::is_nan(lfs[00]) {
             self.phys.fsum += vector![0.0, 0.0, 0.0];
             self.phys.msum += vector![0.0, 0.0, 0.0];
         } else {
             self.phys.fsum += lfs;
-            //self.phys.msum += vector![0.0, lfs[02] * self.csd, lfs[01] * self.csd];
+            self.phys.msum += vector![0.0, lfs[02] * self.csd, lfs[01] * -self.csd];
         }
     }
 }
