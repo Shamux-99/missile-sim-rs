@@ -2,6 +2,7 @@ use nalgebra::{vector, Vector3, Rotation3};
 
 use crate::physics::PhysBody;
 
+#[derive(Clone, Copy)]
 pub struct AeroBody {
     pub phys: PhysBody,
     cxa: f64,
@@ -14,8 +15,10 @@ pub struct AeroBody {
     k_p: f64,
     l_f: f64,
     rho: f64,
-    v_r: f64,
+    pub v_r: f64,
     dbs: f64,
+    pub csp: f64,
+    pub csy: f64,
 }
 
 impl AeroBody {
@@ -43,6 +46,8 @@ impl AeroBody {
             rho: 1.225 * f64::powi(1.0 - (0.00002255691 * phys.pos[02]),2),
             v_r: phys.vel.norm(),
             dbs: 1.225 * f64::powi(1.0 - (0.00002255691 * phys.pos[02]),2) * f64::powi(phys.vel.norm(), 2),
+            csp: 0.0,
+            csy: 0.0,
         }
     }
     pub fn aerostate(
@@ -99,7 +104,6 @@ impl AeroBody {
 
         let rvp = Rotation3::new(vector![0.0, -pitch, 0.0]).transform_vector(&relvel);
         let rvy = Rotation3::new(vector![0.0, 0.0, -yaw]).transform_vector(&relvel);
-
 
         let xpcomp = -rvp.dot(&Vector3::x_axis());
         let xycomp = -rvy.dot(&Vector3::x_axis());

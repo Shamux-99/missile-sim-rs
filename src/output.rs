@@ -1,14 +1,14 @@
-use crate::aero::AeroBody;
+use crate::physics::PhysBody;
 
 use std::error::Error;
 use std::fs::File;
 use nalgebra::Vector3;
 use csv::Writer;
 
-pub fn write(wtr: &mut Writer<File>, object: &AeroBody, frame: i32, dt: f64) -> Result<(), Box<dyn Error>> {
-    let pos = object.phys.pos;
-    let vel = object.phys.vel;
-    let att = object.phys.att.transform_vector(&Vector3::x_axis());
+pub fn write(wtr: &mut Writer<File>, object: &PhysBody, frame: i32, dt: f64) -> Result<(), Box<dyn Error>> {
+    let pos = object.pos;
+    let vel = object.vel;
+    let att = object.att.transform_vector(&Vector3::x_axis());
 
     wtr.write_record(&[
         pos[00].to_string(),
