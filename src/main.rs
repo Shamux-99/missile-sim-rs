@@ -8,11 +8,34 @@ use nalgebra::{vector, UnitQuaternion};
 
 use aero::AeroBody;
 use physics::PhysBody;
-use output::write;
 use guidance::pronav;
+use output::write;
 
 const DT: f64 = 0.05;
 fn main() {
+    fs::remove_file("outputs/missile_state.csv").expect("could not remove file");
+let missile_file = OpenOptions::new()
+.write(true)
+.create(true)
+.append(true)
+.open("outputs/missile_state.csv")
+.unwrap();
+
+let mut missile_wtr = csv::Writer::from_writer(missile_file);
+
+fs::remove_file("outputs/target_state.csv").expect("could not remove file");
+let target_file = OpenOptions::new()
+.write(true)
+.create(true)
+.append(true)
+.open("outputs/target_state.csv")
+.unwrap();
+
+let mut target_wtr = csv::Writer::from_writer(target_file);
+
+missile_wtr.write_record(&["xp", "yp", "zp", "xv", "yv", "zv", "xd", "yd", "zd", "spd", "t"]).expect("Could not write record");
+target_wtr.write_record(&["xp", "yp", "zp", "xv", "yv", "zv", "xd", "yd", "zd", "spd", "t"]).expect("Could not write record");
+
     let mut aero_bodies: Vec<AeroBody> = Vec::new();
 
     let mut missile = AeroBody::new(
@@ -20,7 +43,7 @@ fn main() {
         5.18,
         0.36,
         581.0,
-        vector![0.0, 0.0, 0.0],
+        vector![0.0, 0.0, 5000.0],
         vector![0.0, 0.0, 0.0],
         UnitQuaternion::from_euler_angles(0.0, -FRAC_PI_2, 0.0),
         vector![0.0, 0.0, 0.0],
@@ -57,33 +80,10 @@ fn main() {
     );
     aero_bodies.push(target);
 
-    fs::remove_file("outputs/missile_state.csv").expect("could not remove file");
-    let missile_file = OpenOptions::new()
-    .write(true)
-    .create(true)
-    .append(true)
-    .open("outputs/missile_state.csv")
-    .unwrap();
-
-    let mut missile_wtr = csv::Writer::from_writer(missile_file);
-
-    fs::remove_file("outputs/target_state.csv").expect("could not remove file");
-    let target_file = OpenOptions::new()
-    .write(true)
-    .create(true)
-    .append(true)
-    .open("outputs/target_state.csv")
-    .unwrap();
-
-    let mut target_wtr = csv::Writer::from_writer(target_file);
-    
-    missile_wtr.write_record(&["xp", "yp", "zp", "xv", "yv", "zv", "xd", "yd", "zd", "spd", "t"]).expect("Could not write record");
-    target_wtr.write_record(&["xp", "yp", "zp", "xv", "yv", "zv", "xd", "yd", "zd", "spd", "t"]).expect("Could not write record");
-
     //program main loop
     for t in 0..((40.0 / DT) + 1.0) as i32 {
 
-        if missile.phys.pos[02] < 0.0 || (missile.phys.pos - target.phys.pos).norm() < 50.0 {
+        if missile.phys.pos[02] < 0.0 || (missile.phys.pos - target.phys.pos).norm() < 100.0 {
             break;
         }
 
@@ -107,7 +107,10 @@ fn main() {
         target.phys.step(DT);
 
         //missile physics calculations
-        missile.phys.fsum += vector![24000.0, 0.0, 0.0];
+        if t as f64 * DT < 10.0 {
+            missile.phys.fsum += vector![24000.0, 0.0, 0.0];
+        }
+
         pronav(missile, target.phys, &mut missile.csp, &mut missile.csy);
         missile.aerostate();    
         missile.bodydrag();

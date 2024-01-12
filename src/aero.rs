@@ -4,21 +4,21 @@ use crate::physics::PhysBody;
 
 #[derive(Clone, Copy)]
 pub struct AeroBody {
-    pub phys: PhysBody,
-    cxa: f64,
-    pfa: f64,
-    csa: f64,
-    csd: f64,
-    k_n: f64,
-    k_a: f64,
-    k_m: f64,
-    k_p: f64,
-    l_f: f64,
-    rho: f64,
-    pub v_r: f64,
-    dbs: f64,
-    pub csp: f64,
-    pub csy: f64,
+    pub phys: PhysBody, //physbody to apply aero forces to
+    cxa: f64, //cross-sectional area of physbody
+    pfa: f64, //planform area of physbody
+    csa: f64, //control surface area
+    csd: f64, //control surface drag coefficient
+    k_n: f64, //normal drag force coefficient
+    k_a: f64, //axial drag force coefficient
+    k_m: f64, //yaw damping coefficient
+    k_p: f64, //roll damping coefficient
+    l_f: f64, //distance from control surface to missile cg
+    rho: f64, //air density
+    pub v_r: f64, //magnitude of missile velocity vector
+    dbs: f64, //drag base, consists of terms common to all drag equations
+    pub csp: f64, //control surface pitch input transfer variable, belongs in args of csurf() in main function
+    pub csy: f64, //control surface yaw input transfer variable, belongs in args of csurf() in main function
 }
 
 impl AeroBody {
@@ -37,7 +37,7 @@ impl AeroBody {
             cxa: f64::powi(phys.radius * 2.0, 2),
             pfa: phys.radius * 2.0 * phys.length,
             k_n: k_n,
-            k_a:k_a,
+            k_a: k_a,
             k_m: k_m,
             k_p: k_p,
             l_f: l_f,
